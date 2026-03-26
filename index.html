@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Fluency — The Prompting Lab</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:   #0D1B2A;
+    --navy2:  #152336;
+    --navy3:  #1E3252;
+    --amber:  #F59E0B;
+    --amber2: #FCD34D;
+    --sky:    #38BDF8;
+    --white:  #F8FAFC;
+    --muted:  #94A3B8;
+    --mid:    #64748B;
+    --green:  #16A34A;
+    --red:    #DC2626;
+    --greenBg: #052e16;
+    --redBg:   #2a0a0a;
+    --card:   #162030;
+    --border: rgba(255,255,255,0.08);
+  }
+
+  html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: var(--navy); color: var(--white); overflow-x: hidden; }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; gap: 0;
+    background: rgba(13,27,42,0.96); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    height: 56px; padding: 0 1.5rem;
+  }
+  .nav-logo { font-family: 'DM Serif Display', serif; font-size: 1.15rem; color: var(--amber); margin-right: 2rem; white-space: nowrap; }
+  .nav-tabs { display: flex; gap: 0; }
+  .tab-btn {
+    padding: 0 1.25rem; height: 56px; background: none; border: none;
+    color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 0.875rem; font-weight: 500;
+    cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap;
+  }
+  .tab-btn:hover { color: var(--white); }
+  .tab-btn.active { color: var(--amber); border-bottom-color: var(--amber); }
+
+  /* ── SECTIONS ── */
+  .section { display: none; min-height: 100vh; padding: 72px 1.5rem 3rem; max-width: 1100px; margin: 0 auto; }
+  .section.active { display: block; }
+
+  /* ── HERO HEADER ── */
+  .hero { padding: 2.5rem 0 2rem; }
+  .hero-eyebrow { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--amber); margin-bottom: 0.6rem; }
+  .hero-title { font-family: 'DM Serif Display', serif; font-size: clamp(2rem, 4vw, 3rem); line-height: 1.1; color: var(--white); margin-bottom: 0.75rem; }
+  .hero-sub { font-size: 1rem; color: var(--muted); line-height: 1.6; max-width: 560px; }
+
+  /* ── CARDS ── */
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; }
+  .card-sm { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.25rem; }
+
+  /* ── SECTION 1: FRAMEWORK ── */
+  .ctfc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin: 2rem 0; }
+  @media (max-width: 700px) { .ctfc-grid { grid-template-columns: 1fr 1fr; } }
+
+  .ctfc-card {
+    border-radius: 14px; padding: 1.5rem; cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s; position: relative; overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .ctfc-card:hover { transform: translateY(-3px); }
+  .ctfc-card .letter {
+    font-family: 'DM Serif Display', serif; font-size: 3.5rem; line-height: 1;
+    font-weight: 400; opacity: 0.18; position: absolute; right: 0.75rem; top: 0.5rem;
+  }
+  .ctfc-card .word { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.5rem; }
+  .ctfc-card h3 { font-family: 'DM Serif Display', serif; font-size: 1.4rem; margin-bottom: 0.6rem; }
+  .ctfc-card p { font-size: 0.875rem; line-height: 1.55; opacity: 0.8; }
+  .ctfc-card.c { background: linear-gradient(135deg, #1a2e50 0%, #0f1e35 100%); }
+  .ctfc-card.t { background: linear-gradient(135deg, #0d2e2e 0%, #081f1f 100%); }
+  .ctfc-card.f { background: linear-gradient(135deg, #2e1a0a 0%, #1f1005 100%); }
+  .ctfc-card.k { background: linear-gradient(135deg, #1a2e1a 0%, #0a1f0a 100%); }
+  .ctfc-card.c .word, .ctfc-card.c .letter { color: #7dd3fc; }
+  .ctfc-card.t .word, .ctfc-card.t .letter { color: #5eead4; }
+  .ctfc-card.f .word, .ctfc-card.f .letter { color: #fcd34d; }
+  .ctfc-card.k .word, .ctfc-card.k .letter { color: #86efac; }
+  .ctfc-card.c h3 { color: #bae6fd; }
+  .ctfc-card.t h3 { color: #99f6e4; }
+  .ctfc-card.f h3 { color: #fde68a; }
+  .ctfc-card.k h3 { color: #bbf7d0; }
+
+  .framework-example { margin: 2.5rem 0; }
+  .framework-example h2 { font-family: 'DM Serif Display', serif; font-size: 1.5rem; margin-bottom: 1.25rem; }
+
+  .annotated-prompt { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+  .ap-row { display: flex; align-items: stretch; border-bottom: 1px solid var(--border); }
+  .ap-row:last-child { border-bottom: none; }
+  .ap-label { width: 120px; min-width: 120px; padding: 1rem; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; display: flex; align-items: flex-start; padding-top: 1.1rem; border-right: 1px solid var(--border); }
+  .ap-text { padding: 1rem 1.25rem; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; line-height: 1.6; flex: 1; }
+  .ap-row.ctx .ap-label { color: #7dd3fc; }
+  .ap-row.tsk .ap-label { color: #5eead4; }
+  .ap-row.fmt .ap-label { color: #fcd34d; }
+  .ap-row.con .ap-label { color: #86efac; }
+
+  .result-box { margin-top: 1.25rem; background: #091a0e; border: 1px solid rgba(22,163,74,0.3); border-radius: 14px; padding: 1.25rem; }
+  .result-box .result-label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--green); margin-bottom: 0.75rem; }
+  .result-box p { font-size: 0.9rem; line-height: 1.7; color: #d1fae5; font-style: italic; }
+
+  /* ── SECTION 2: GOOD VS BAD ── */
+  .compare-toggle { display: flex; gap: 0; background: var(--navy2); border-radius: 10px; padding: 4px; width: fit-content; margin: 1.5rem 0; border: 1px solid var(--border); }
+  .toggle-btn {
+    padding: 0.45rem 1.25rem; border: none; border-radius: 7px; font-family: 'DM Sans', sans-serif;
+    font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.2s; background: none; color: var(--muted);
+  }
+  .toggle-btn.active.bad { background: var(--redBg); color: #fca5a5; border: 1px solid rgba(220,38,38,0.3); }
+  .toggle-btn.active.good { background: var(--greenBg); color: #86efac; border: 1px solid rgba(22,163,74,0.3); }
+
+  .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+  @media (max-width: 700px) { .compare-grid { grid-template-columns: 1fr; } }
+
+  .prompt-box {
+    border-radius: 12px; padding: 1.25rem;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; line-height: 1.65;
+    transition: all 0.3s;
+  }
+  .prompt-box.bad { background: var(--redBg); border: 1px solid rgba(220,38,38,0.3); color: #fca5a5; }
+  .prompt-box.good { background: #0a1f12; border: 1px solid rgba(22,163,74,0.25); color: #d1fae5; }
+
+  .response-box {
+    margin-top: 1rem; border-radius: 12px; padding: 1.25rem;
+    font-size: 0.875rem; line-height: 1.7; min-height: 120px;
+    transition: all 0.3s;
+  }
+  .response-box.bad { background: var(--navy2); border: 1px solid var(--border); color: var(--muted); font-style: italic; }
+  .response-box.good { background: #071510; border: 1px solid rgba(22,163,74,0.2); color: #a7f3d0; font-style: italic; }
+
+  .col-header { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.75rem; }
+  .col-header.bad { color: #f87171; }
+  .col-header.good { color: #4ade80; }
+
+  .verdict { border-radius: 10px; padding: 1rem 1.25rem; font-size: 0.9rem; font-weight: 500; margin-top: 1.25rem; }
+  .verdict.bad { background: var(--redBg); border: 1px solid rgba(220,38,38,0.25); color: #fca5a5; }
+  .verdict.good { background: var(--greenBg); border: 1px solid rgba(22,163,74,0.25); color: #86efac; }
+
+  .examples-nav { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .ex-btn {
+    padding: 0.4rem 0.9rem; background: var(--navy2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 0.8rem;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .ex-btn:hover { border-color: var(--amber); color: var(--amber); }
+  .ex-btn.active { background: rgba(245,158,11,0.1); border-color: var(--amber); color: var(--amber); }
+
+  /* ── SECTION 3: LIVE BUILDER ── */
+  .builder-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.5rem; }
+  @media (max-width: 800px) { .builder-grid { grid-template-columns: 1fr; } }
+
+  .builder-left { display: flex; flex-direction: column; gap: 1rem; }
+  .builder-right { display: flex; flex-direction: column; gap: 1rem; }
+
+  .field-group { display: flex; flex-direction: column; gap: 0.4rem; }
+  .field-label {
+    font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+    display: flex; align-items: center; gap: 0.4rem;
+  }
+  .field-label .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .dot-c { background: #38bdf8; }
+  .dot-t { background: #2dd4bf; }
+  .dot-f { background: #fbbf24; }
+  .dot-k { background: #4ade80; }
+
+  textarea {
+    width: 100%; background: var(--navy2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 0.75rem 1rem; color: var(--white); font-family: 'DM Sans', sans-serif; font-size: 0.875rem;
+    line-height: 1.55; resize: vertical; transition: border-color 0.2s; outline: none;
+  }
+  textarea:focus { border-color: var(--amber); }
+  textarea::placeholder { color: var(--mid); }
+
+  .generate-btn {
+    padding: 0.85rem 2rem; background: var(--amber); color: var(--navy); border: none;
+    border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 600;
+    cursor: pointer; transition: all 0.2s; width: 100%; margin-top: 0.5rem;
+  }
+  .generate-btn:hover { background: var(--amber2); }
+  .generate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .built-prompt {
+    background: var(--navy2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 1rem; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; line-height: 1.7;
+    color: #cbd5e1; min-height: 80px; white-space: pre-wrap;
+  }
+  .prompt-label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem; }
+
+  .ai-response {
+    background: #071510; border: 1px solid rgba(22,163,74,0.25); border-radius: 10px;
+    padding: 1.25rem; font-size: 0.875rem; line-height: 1.75; color: #a7f3d0;
+    min-height: 200px; white-space: pre-wrap;
+  }
+  .ai-response.loading { color: var(--muted); font-style: italic; animation: pulse 1.5s infinite; }
+  .ai-response.error { background: var(--redBg); border-color: rgba(220,38,38,0.3); color: #fca5a5; }
+
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+  .tip-box { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 10px; padding: 1rem; font-size: 0.85rem; color: #fde68a; line-height: 1.55; }
+  .tip-box strong { color: var(--amber); }
+
+  /* ── PRESETS ── */
+  .preset-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+  .preset-btn {
+    padding: 0.35rem 0.85rem; background: var(--navy2); border: 1px solid var(--border);
+    border-radius: 20px; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 0.8rem;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .preset-btn:hover { border-color: var(--sky); color: var(--sky); }
+
+  /* ── FOOTER ── */
+  .page-footer { text-align: center; padding: 2rem; font-size: 0.8rem; color: var(--mid); border-top: 1px solid var(--border); margin-top: 2rem; }
+
+  /* ── DIVIDER ── */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+
+  /* ── INFO CHIPS ── */
+  .info-row { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.75rem; }
+  .chip { padding: 0.3rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 500; }
+  .chip.amber { background: rgba(245,158,11,0.12); color: var(--amber); border: 1px solid rgba(245,158,11,0.2); }
+  .chip.sky { background: rgba(56,189,248,0.1); color: var(--sky); border: 1px solid rgba(56,189,248,0.2); }
+  .chip.green { background: rgba(22,163,74,0.1); color: #4ade80; border: 1px solid rgba(22,163,74,0.2); }
+
+  /* ── TOKEN VISUALIZATION ── */
+  .token-demo { margin: 2rem 0; }
+  .token-sentence { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; line-height: 2; margin-bottom: 1.25rem; letter-spacing: 0.02em; }
+  .token-word { display: inline-block; margin: 0 2px; padding: 2px 6px; border-radius: 4px; transition: all 0.3s; }
+  .token-word.highlight { background: rgba(245,158,11,0.2); border: 1px solid rgba(245,158,11,0.4); color: var(--amber2); }
+  .token-blank { display: inline-block; width: 60px; height: 28px; border-bottom: 2px solid var(--amber); margin: 0 4px; vertical-align: middle; }
+
+  .token-bars { display: flex; flex-direction: column; gap: 0.5rem; }
+  .token-bar-row { display: flex; align-items: center; gap: 0.75rem; }
+  .token-bar-word { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; width: 80px; text-align: right; }
+  .token-bar-track { flex: 1; background: var(--navy2); border-radius: 4px; height: 22px; overflow: hidden; }
+  .token-bar-fill { height: 100%; border-radius: 4px; display: flex; align-items: center; padding-left: 8px; font-size: 0.75rem; font-weight: 500; transition: width 0.8s cubic-bezier(0.4,0,0.2,1); }
+  .token-bar-pct { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; width: 36px; }
+
+  select {
+    background: var(--navy2); border: 1px solid var(--border); border-radius: 8px;
+    color: var(--white); padding: 0.5rem 0.75rem; font-family: 'DM Sans', sans-serif;
+    font-size: 0.875rem; outline: none; cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="nav-logo">AI Fluency</span>
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="showSection('framework')">① The Framework</button>
+    <button class="tab-btn" onclick="showSection('compare')">② Good vs Bad</button>
+    <button class="tab-btn" onclick="showSection('builder')">③ Live Builder</button>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- SECTION 1: FRAMEWORK -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section id="sec-framework" class="section active">
+  <div class="hero">
+    <p class="hero-eyebrow">Prompting Fundamentals</p>
+    <h1 class="hero-title">A good prompt has four ingredients</h1>
+    <p class="hero-sub">Think of it like briefing a highly capable new employee who knows nothing about your business — yet.</p>
+    <div class="info-row">
+      <span class="chip amber">Context</span>
+      <span class="chip sky">Task</span>
+      <span class="chip amber">Format</span>
+      <span class="chip green">Constraints</span>
+    </div>
+  </div>
+
+  <div class="ctfc-grid">
+    <div class="ctfc-card c">
+      <span class="letter">C</span>
+      <p class="word">Context</p>
+      <h3>Who &amp; Where</h3>
+      <p>Tell the AI who you are, what industry you work in, and what situation you're dealing with. Without this, it writes for a generic audience.</p>
+    </div>
+    <div class="ctfc-card t">
+      <span class="letter">T</span>
+      <p class="word">Task</p>
+      <h3>What to Do</h3>
+      <p>Be precise about the action you want taken. "Help me with pricing" is a wish. "Write a 150-word justification for a 7% price increase" is a task.</p>
+    </div>
+    <div class="ctfc-card f">
+      <span class="letter">F</span>
+      <p class="word">Format</p>
+      <h3>How to Present</h3>
+      <p>Specify the output shape — bullet list, table, email, paragraph, numbered steps. If you don't specify, the AI guesses, and often guesses wrong.</p>
+    </div>
+    <div class="ctfc-card k">
+      <span class="letter">C</span>
+      <p class="word">Constraints</p>
+      <h3>What to Avoid</h3>
+      <p>Length limits, tone, things to include or exclude. "Keep it under 200 words", "don't be apologetic", "avoid jargon" — these dramatically shape the output.</p>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="framework-example">
+    <h2>See it applied — wire rope price increase</h2>
+
+    <div class="annotated-prompt" style="margin-bottom: 1.25rem;">
+      <div class="ap-row ctx">
+        <div class="ap-label">Context</div>
+        <div class="ap-text">You are assisting an Australian industrial distributor in the lifting and rigging sector. Our primary wire rope supplier is based in Europe (Germany).</div>
+      </div>
+      <div class="ap-row tsk">
+        <div class="ap-label">Task</div>
+        <div class="ap-text">Write a professional justification for a 7% price increase on our 6x36 IWRC wire rope range, to be sent to a key customer.</div>
+      </div>
+      <div class="ap-row fmt">
+        <div class="ap-label">Format</div>
+        <div class="ap-text">One paragraph of approximately 120 words — ready to paste into an email. No bullet points. No subject line needed.</div>
+      </div>
+      <div class="ap-row con">
+        <div class="ap-label">Constraints</div>
+        <div class="ap-text">Reference AUD/EUR depreciation over the past 12–18 months, rising steel rod costs in European mills, and freight increases. Maintain a partnership tone. Do not be apologetic or overly formal. Avoid vague language like "due to market conditions".</div>
+      </div>
+    </div>
+
+    <div class="result-box">
+      <p class="result-label">What you get back</p>
+      <p>Following 18 months of sustained AUD/EUR depreciation — the Australian dollar has weakened approximately 9% against the Euro — alongside a 12–15% rise in wire rod input costs at European mills and meaningful freight increases from our logistics partners, we are implementing a 7% adjustment on our 6×36 IWRC wire rope range effective next quarter. This adjustment reflects the genuine cost movements in our supply chain, not a margin decision, and we remain committed to providing you with the consistent supply reliability and lead times you depend on. We appreciate your continued partnership and are happy to walk through the detail at your convenience.</p>
+    </div>
+  </div>
+
+  <div class="tip-box" style="margin-top: 1.5rem;">
+    <strong>The mental model:</strong> You wouldn't hand a new employee a two-word brief and expect a boardroom-ready output. AI is the same. The more specific your input, the more usable your output.
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- SECTION 2: GOOD VS BAD -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section id="sec-compare" class="section">
+  <div class="hero">
+    <p class="hero-eyebrow">Prompt Comparison</p>
+    <h1 class="hero-title">Same AI. Completely different result.</h1>
+    <p class="hero-sub">The model didn't change. The prompter did.</p>
+  </div>
+
+  <div class="examples-nav">
+    <button class="ex-btn active" onclick="loadExample(0, this)">Price increase letter</button>
+    <button class="ex-btn" onclick="loadExample(1, this)">Supplier comparison</button>
+    <button class="ex-btn" onclick="loadExample(2, this)">Customer complaint</button>
+    <button class="ex-btn" onclick="loadExample(3, this)">Product description</button>
+  </div>
+
+  <div class="compare-grid">
+    <div>
+      <p class="col-header bad">✗ Without context</p>
+      <div class="prompt-box bad" id="bad-prompt"></div>
+      <div class="response-box bad" id="bad-response"></div>
+      <div class="verdict bad" id="bad-verdict"></div>
+    </div>
+    <div>
+      <p class="col-header good">✓ With full context (CTFC)</p>
+      <div class="prompt-box good" id="good-prompt"></div>
+      <div class="response-box good" id="good-response"></div>
+      <div class="verdict good" id="good-verdict"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- SECTION 3: LIVE BUILDER -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section id="sec-builder" class="section">
+  <div class="hero">
+    <p class="hero-eyebrow">Live Demo</p>
+    <h1 class="hero-title">Build a prompt, see it work</h1>
+    <p class="hero-sub">Fill in the four fields below and hit Generate — Claude responds in real time.</p>
+  </div>
+
+  <div class="preset-row">
+    <span style="font-size:0.8rem; color: var(--muted); align-self:center; margin-right:0.25rem;">Try a preset:</span>
+    <button class="preset-btn" onclick="loadPreset('priceinc')">Price increase letter</button>
+    <button class="preset-btn" onclick="loadPreset('supplier')">Supplier negotiation</button>
+    <button class="preset-btn" onclick="loadPreset('complaint')">Customer complaint</button>
+    <button class="preset-btn" onclick="loadPreset('report')">Market summary</button>
+  </div>
+
+  <div class="builder-grid">
+    <div class="builder-left">
+      <div class="field-group">
+        <label class="field-label"><span class="dot dot-c"></span> Context — who you are and the situation</label>
+        <textarea id="f-context" rows="3" placeholder="e.g. I'm a Pricing Manager at an Australian lifting & rigging distributor. I source wire rope from European suppliers (Verope, Pfeifer Drako) and sell into the Australian market."></textarea>
+      </div>
+      <div class="field-group">
+        <label class="field-label"><span class="dot dot-t"></span> Task — what you want Claude to do</label>
+        <textarea id="f-task" rows="3" placeholder="e.g. Write a justification email paragraph for a 7% price increase on our 6x36 IWRC wire rope, to be sent to a key customer."></textarea>
+      </div>
+      <div class="field-group">
+        <label class="field-label"><span class="dot dot-f"></span> Format — how you want the output shaped</label>
+        <textarea id="f-format" rows="2" placeholder="e.g. One paragraph, ~120 words. No bullet points. Ready to paste into an email body."></textarea>
+      </div>
+      <div class="field-group">
+        <label class="field-label"><span class="dot dot-k"></span> Constraints — tone, limits, what to avoid</label>
+        <textarea id="f-constraints" rows="3" placeholder="e.g. Reference AUD/EUR depreciation and rising European steel rod costs. Maintain a confident partnership tone. Do not be apologetic. Avoid vague phrases like 'due to market conditions'."></textarea>
+      </div>
+      <button class="generate-btn" id="gen-btn" onclick="generateResponse()">Generate with Claude →</button>
+    </div>
+
+    <div class="builder-right">
+      <div>
+        <p class="prompt-label">Your assembled prompt</p>
+        <div class="built-prompt" id="built-prompt">Fill in the fields on the left to see your prompt take shape…</div>
+      </div>
+      <div>
+        <p class="prompt-label" style="color: #4ade80;">Claude's response</p>
+        <div class="ai-response" id="ai-response">Your response will appear here after you click Generate.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tip-box" style="margin-top: 1.5rem;">
+    <strong>Presenter tip:</strong> Ask the audience to shout out one of the fields live — "Who should the context be?" — then fill it in together. The moment you hit Generate and the response streams, it lands.
+  </div>
+</section>
+
+<div class="page-footer" style="max-width:1100px;margin:0 auto;">
+  AI Fluency — Prompting Lab &nbsp;·&nbsp; Built for internal training &nbsp;·&nbsp; Responses powered by Claude
+</div>
+
+<script>
+// ── NAVIGATION ──
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('sec-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ── EXAMPLE DATA ──
+const examples = [
+  {
+    bad: `What should I say to a customer about a price increase?`,
+    badResponse: `You could explain that prices have increased due to market conditions and rising costs. It's important to be transparent and apologetic. You might say something like "We regret to inform you that due to current market conditions, we will be increasing our prices..."
+
+This is vague and generic. The AI doesn't know your product, your customer, or your industry.`,
+    badVerdict: `✗  The AI guessed at your industry, your product, your customer relationship, and your tone. Useless without a complete rewrite.`,
+    good: `CONTEXT: You are assisting an Australian lifting & rigging distributor. Our key wire rope lines are 6x36 IWRC sourced from a German manufacturer (Verope). AUD/EUR has depreciated ~9% in 18 months.
+
+TASK: Write a 7% price increase justification for a key customer who has been buying from us for 6+ years.
+
+FORMAT: One paragraph, ~120 words. Ready to paste into an email — no greeting or sign-off needed.
+
+CONSTRAINTS: Reference AUD/EUR movement and European steel rod cost increases. Confident, partnership-first tone. Do not be apologetic. Avoid the phrase "market conditions" — be specific.`,
+    goodResponse: `Following 18 months of sustained AUD/EUR depreciation — the Australian dollar has weakened approximately 9% against the Euro — alongside a 12–15% rise in wire rod input costs at European mills and meaningful freight increases from our logistics partners, we are implementing a 7% adjustment on our 6×36 IWRC wire rope range effective next quarter. This adjustment reflects genuine cost movements in our supply chain, not a margin decision, and we remain committed to providing you with the consistent supply reliability and lead times you depend on. We appreciate your continued partnership and are happy to walk through the detail at your convenience.`,
+    goodVerdict: `✓  First-draft ready. Specific, confident, industry-accurate. Saved ~45 minutes of writing.`
+  },
+  {
+    bad: `Compare our wire rope suppliers`,
+    badResponse: `When comparing wire rope suppliers, you should consider factors such as quality, price, delivery time, certifications, and customer service. Make a spreadsheet with these criteria and score each supplier...
+
+The AI has no idea who your suppliers are, what you're sourcing, or what matters most to you.`,
+    badVerdict: `✗  Generic procurement 101. No reference to your actual suppliers, categories, or evaluation criteria.`,
+    good: `CONTEXT: I'm a Category Manager at an Australian lifting & rigging distributor. We currently buy 6x36 IWRC wire rope from three suppliers: Verope (Germany), Pfeifer Drako (Germany), and Usha Martin (India).
+
+TASK: Create a structured comparison of these three suppliers across the dimensions that matter most for category management decisions.
+
+FORMAT: A table with suppliers as columns and evaluation dimensions as rows. Follow with a 2-sentence recommendation.
+
+CONSTRAINTS: Focus on: lead time reliability, MOQ, currency exposure, quality certifications (EN 12385), and strategic risk. Keep the recommendation direct — no hedging.`,
+    goodResponse: `| Dimension         | Verope (DE) | Pfeifer Drako (DE) | Usha Martin (IN) |
+|-------------------|-------------|---------------------|------------------|
+| Lead time         | 8–12 weeks  | 8–12 weeks          | 10–14 weeks      |
+| Currency exposure | AUD/EUR     | AUD/EUR             | AUD/USD          |
+| EN 12385 cert     | Yes         | Yes                 | Yes              |
+| MOQ flexibility   | Moderate    | Low                 | High             |
+| Strategic risk    | Low         | Low                 | Medium           |
+
+Verope and Pfeifer Drako offer the lowest strategic risk with equivalent certifications; Usha Martin provides the best MOQ flexibility and partial currency hedge via USD exposure, making it a useful volume buffer for commodity grades.`,
+    goodVerdict: `✓  Structured, decision-ready output. Named your actual suppliers. Took 8 seconds.`
+  },
+  {
+    bad: `Help me respond to a customer complaint about late delivery`,
+    badResponse: `Dear Customer, I am sorry to hear about your experience. We apologise for any inconvenience caused by the delay in delivering your order. We take customer satisfaction very seriously and are investigating the matter...
+
+Apologetic, vague, and could have been written for any industry in 1998.`,
+    badVerdict: `✗  Could be a response about anything — shoes, furniture, groceries. Zero industry specificity. Weak tone.`,
+    good: `CONTEXT: I manage customer accounts for an Australian lifting & rigging distributor. A long-term customer (crane hire company, 8-year relationship) has emailed to complain that their 18mm 6x36 IWRC wire rope order arrived 3 weeks late, causing them to delay a job site.
+
+TASK: Draft a response that acknowledges the delay without being overly apologetic, and rebuilds confidence in our supply reliability.
+
+FORMAT: Email body only (no subject line). 3 short paragraphs. Professional but warm.
+
+CONSTRAINTS: Don't over-apologise or offer automatic discounts. Focus on what we're doing to prevent recurrence. Close with a concrete next step (a call this week).`,
+    goodResponse: `Thank you for raising this directly — a three-week delay on a job-critical order is not acceptable, and I understand the pressure it created on-site.
+
+Our lead times on European-sourced product have been impacted by port congestion in Hamburg over the past two months, and this shipment was caught in that window. We've since moved your account to priority allocation on our next inbound container and have confirmed a 6–8 week lead time buffer on your key running lines going forward.
+
+I'd like to speak with you briefly this week to walk through the plan and make sure we're aligned on your upcoming project requirements — would Thursday morning work?`,
+    goodVerdict: `✓  Confident, not grovelling. Specific about the cause. Ends with a concrete next step. Relationship preserved.`
+  },
+  {
+    bad: `Write a product description for wire rope`,
+    badResponse: `Wire rope is a type of rope made from multiple metal wires twisted together to form a strong and flexible cable. It is widely used in construction, mining, and maritime applications. Wire rope comes in various diameters and configurations to suit different applications...
+
+Wikipedia. Not a product listing. No specs, no audience, no purpose.`,
+    badVerdict: `✗  Generic, unbranded, no specs, no selling angle. Unusable for a product catalogue.`,
+    good: `CONTEXT: I work in marketing for an Australian lifting & rigging distributor. We sell Verope 6x36 IWRC wire rope in 18mm diameter, targeting crane hire and heavy construction buyers.
+
+TASK: Write a product description for our online catalogue page for this specific SKU.
+
+FORMAT: 3 sentences max. Start with the application, not the product. Include the key spec (18mm, 6x36, IWRC core, galvanised finish available).
+
+CONSTRAINTS: Audience is experienced riggers and crane operators — no need to explain what wire rope is. Emphasise reliability and availability. Avoid marketing fluff like "premium quality" or "best-in-class".`,
+    goodResponse: `Engineered for high-cycle crane and hoist applications where fatigue resistance and consistent breaking load are non-negotiable, the Verope 6×36 IWRC in 18mm diameter delivers the structural integrity demanded by heavy construction and crane hire operations. The independent wire rope core provides superior crush resistance under multi-layer drum winding, and galvanised finish is available for corrosive or marine environments. Stocked locally in Sydney and Melbourne for fast dispatch.`,
+    goodVerdict: `✓  Speaks directly to a rigger. Leads with application. Specific, professional, no fluff.`
+  }
+];
+
+let currentExample = 0;
+
+function loadExample(i, btn) {
+  currentExample = i;
+  document.querySelectorAll('.ex-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const ex = examples[i];
+  document.getElementById('bad-prompt').textContent = ex.bad;
+  document.getElementById('bad-response').textContent = ex.badResponse;
+  document.getElementById('bad-verdict').textContent = ex.badVerdict;
+  document.getElementById('good-prompt').textContent = ex.good;
+  document.getElementById('good-response').textContent = ex.goodResponse;
+  document.getElementById('good-verdict').textContent = ex.goodVerdict;
+}
+
+// ── PRESETS ──
+const presets = {
+  priceinc: {
+    context: "I'm a Pricing Manager at an Australian lifting & rigging distributor. We source 6x36 IWRC wire rope from European manufacturers (Verope, Pfeifer Drako). The AUD/EUR rate has weakened ~9% over the past 18 months.",
+    task: "Write a justification paragraph for a 7% price increase on our 6x36 IWRC wire rope range, to be sent to a key customer.",
+    format: "One paragraph, approximately 120 words. Ready to paste into an email body — no greeting or closing needed.",
+    constraints: "Reference AUD/EUR depreciation and rising steel rod costs at European mills. Confident, partnership-first tone. Do not be apologetic. Avoid vague phrases — be specific about the causes."
+  },
+  supplier: {
+    context: "I'm a Category Manager at an Australian lifting & rigging distributor. I'm preparing for a negotiation with our main European wire rope supplier ahead of annual price discussions.",
+    task: "Draft a briefing note outlining our negotiating position and three key leverage points we can use in the discussion.",
+    format: "Three clearly labelled bullet points, each with a one-line rationale. Under 150 words total.",
+    constraints: "Leverage points should be commercially grounded — volume commitments, payment terms, multi-year contract. Avoid anything that sounds like a bluff. Confident but collaborative tone."
+  },
+  complaint: {
+    context: "I manage key accounts for an Australian lifting & rigging distributor. A long-term crane hire customer (8-year relationship) is frustrated because their 18mm wire rope order arrived 3 weeks late.",
+    task: "Draft a response email that acknowledges the delay, explains what happened briefly, and rebuilds confidence.",
+    format: "3 short paragraphs. Professional but warm. Email body only — no subject line.",
+    constraints: "Don't over-apologise. Don't offer automatic discounts. Be specific about the root cause and what we're doing to prevent recurrence. End with a concrete next step."
+  },
+  report: {
+    context: "I work in category management for an Australian lifting & rigging distributor. I need to brief the sales team on current conditions in the wire rope market.",
+    task: "Write a short market summary covering steel input costs, currency impacts, and supplier lead times relevant to our business.",
+    format: "Three short sections with bold headers. Under 200 words. Bullet points within each section are fine.",
+    constraints: "Keep it factual and practical — this is a sales team briefing, not an academic paper. End each section with a one-line implication for our pricing or stock decisions."
+  }
+};
+
+function loadPreset(key) {
+  const p = presets[key];
+  document.getElementById('f-context').value = p.context;
+  document.getElementById('f-task').value = p.task;
+  document.getElementById('f-format').value = p.format;
+  document.getElementById('f-constraints').value = p.constraints;
+  updateBuiltPrompt();
+}
+
+function updateBuiltPrompt() {
+  const ctx = document.getElementById('f-context').value.trim();
+  const tsk = document.getElementById('f-task').value.trim();
+  const fmt = document.getElementById('f-format').value.trim();
+  const con = document.getElementById('f-constraints').value.trim();
+  let parts = [];
+  if (ctx) parts.push('CONTEXT:\n' + ctx);
+  if (tsk) parts.push('TASK:\n' + tsk);
+  if (fmt) parts.push('FORMAT:\n' + fmt);
+  if (con) parts.push('CONSTRAINTS:\n' + con);
+  document.getElementById('built-prompt').textContent = parts.length ? parts.join('\n\n') : 'Fill in the fields on the left to see your prompt take shape…';
+}
+
+['f-context','f-task','f-format','f-constraints'].forEach(id => {
+  document.getElementById(id).addEventListener('input', updateBuiltPrompt);
+});
+
+// ── LIVE GENERATION ──
+async function generateResponse() {
+  const ctx = document.getElementById('f-context').value.trim();
+  const tsk = document.getElementById('f-task').value.trim();
+  const fmt = document.getElementById('f-format').value.trim();
+  const con = document.getElementById('f-constraints').value.trim();
+
+  if (!tsk) {
+    document.getElementById('ai-response').textContent = 'Please fill in at least the Task field before generating.';
+    document.getElementById('ai-response').className = 'ai-response error';
+    return;
+  }
+
+  const prompt = [
+    ctx && 'CONTEXT:\n' + ctx,
+    tsk && 'TASK:\n' + tsk,
+    fmt && 'FORMAT:\n' + fmt,
+    con && 'CONSTRAINTS:\n' + con
+  ].filter(Boolean).join('\n\n');
+
+  const btn = document.getElementById('gen-btn');
+  const responseEl = document.getElementById('ai-response');
+  btn.disabled = true;
+  btn.textContent = 'Generating…';
+  responseEl.className = 'ai-response loading';
+  responseEl.textContent = 'Claude is thinking…';
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await response.json();
+    if (data.error) throw new Error(data.error.message);
+    const text = data.content.map(b => b.text || '').join('');
+    responseEl.className = 'ai-response';
+    responseEl.textContent = text;
+  } catch (err) {
+    responseEl.className = 'ai-response error';
+    responseEl.textContent = 'Error: ' + err.message + '\n\nMake sure this page is served via the Claude.ai interface with API access enabled.';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Generate with Claude →';
+  }
+}
+
+// ── INIT ──
+loadExample(0, null);
+</script>
+</body>
+</html>
