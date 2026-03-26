@@ -589,25 +589,93 @@ function updateBuiltPrompt() {
   document.getElementById(id).addEventListener('input', updateBuiltPrompt);
 });
 
-// ── LIVE GENERATION ──
-async function generateResponse() {
-  const ctx = document.getElementById('f-context').value.trim();
-  const tsk = document.getElementById('f-task').value.trim();
-  const fmt = document.getElementById('f-format').value.trim();
-  const con = document.getElementById('f-constraints').value.trim();
+// ── SIMULATED STREAMING ──
+// To switch to LIVE mode: replace simulateStream() with the real API call below.
+// Uncomment and add your Anthropic API key where shown.
+//
+// const ANTHROPIC_KEY = 'sk-ant-XXXXXXXXXXXX';  // ← paste your key here
+//
+// async function callRealAPI(prompt) {
+//   const r = await fetch('https://api.anthropic.com/v1/messages', {
+//     method: 'POST',
+//     headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01' },
+//     body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
+//   });
+//   const d = await r.json();
+//   if (d.error) throw new Error(d.error.message);
+//   return d.content.map(b => b.text || '').join('');
+// }
 
+const simulatedResponses = {
+  priceinc: `Following 18 months of sustained AUD/EUR depreciation — the Australian dollar has weakened approximately 9% against the Euro — alongside a 12–15% rise in wire rod input costs at European mills and meaningful freight increases from our logistics partners, we are implementing a 7% adjustment on our 6×36 IWRC wire rope range effective next quarter. This adjustment reflects genuine cost movements in our supply chain, not a margin decision, and we remain committed to providing you with the consistent supply reliability and lead times you depend on. We appreciate your continued partnership and are happy to walk through the detail at your convenience.`,
+
+  supplier: `• Volume commitment as anchor: Offer a 12-month forward volume commitment on our top-3 SKUs in exchange for a pricing freeze — this gives them demand visibility they value more than a small margin gain on spot orders.
+
+• Payment terms as a trading chip: We currently pay net-30. Offering net-15 or prepayment on a portion of orders is a low-cost concession for us that carries real working capital value for them.
+
+• Multi-year contract in exchange for price certainty: A 2-year agreement with CPI-linked adjustments caps our exposure to mid-year price surprises and gives their planning team predictability — frame it as mutual risk reduction, not just a cost-control play.`,
+
+  complaint: `Thank you for raising this directly — a three-week delay on a job-critical order is not the standard of service you should expect from us, and I understand the pressure it created on site.
+
+The delay was caused by port congestion in Hamburg that affected two consecutive vessels carrying our European stock. That backlog has now cleared, and we've moved your account to priority allocation on our next inbound container arriving in the next 10 days. We're also holding a dedicated buffer of your key running lines from our Sydney warehouse going forward to absorb any future shipping variability.
+
+I'd like to speak with you briefly this week to walk through your upcoming project requirements and make sure we're set up correctly — would Thursday morning work for a quick call?`,
+
+  report: `**Steel Input Costs**
+Wire rod prices at European mills remain elevated, up approximately 12–15% year-on-year driven by energy costs and reduced Chinese export volumes. Some stabilisation is emerging in Q1 but no meaningful reversal expected before mid-year. Implication: hold the line on current pricing — cost base does not support discounting.
+
+**Currency Impact**
+AUD/EUR is trading around 0.58–0.60, down from 0.64 eighteen months ago — a ~9% headwind on all European-sourced product. USD-sourced lines (synthetic fibre, some fittings) are partially insulated. Implication: use AUD/EUR data actively in customer price conversations.
+
+**Supplier Lead Times**
+European suppliers (Verope, Pfeifer Drako) running 8–12 weeks; Usha Martin (India) at 10–14 weeks. No significant improvement expected in H1. Implication: push customers toward forward orders — reactive buying is creating avoidable stock-outs.`
+};
+
+const fallbackResponse = `Based on your prompt, here's a draft response:
+
+Thank you for the detailed brief — this gives a clear picture of what's needed.
+
+Given the context you've provided, the key considerations are the specific requirements you've outlined in your task. The format and constraints you've set will help ensure the output is immediately usable without heavy editing.
+
+A well-structured response to this prompt would directly address your core objective, reference the relevant industry context, maintain the tone you've specified, and be ready to use with minimal adjustment.
+
+[Note: This is a simulated response for demonstration. Load one of the four presets above to see a full industry-specific example, or connect a live API key for real-time generation.]`;
+
+function detectPreset() {
+  const ctx = document.getElementById('f-context').value;
+  const tsk = document.getElementById('f-task').value;
+  if (tsk.includes('price increase') || tsk.includes('7%') || ctx.includes('AUD/EUR')) return 'priceinc';
+  if (tsk.includes('negotiat') || tsk.includes('leverage') || tsk.includes('briefing note')) return 'supplier';
+  if (tsk.includes('complaint') || tsk.includes('delay') || tsk.includes('late')) return 'complaint';
+  if (tsk.includes('market summary') || tsk.includes('steel input') || tsk.includes('brief the sales')) return 'report';
+  return null;
+}
+
+async function simulateStream(text, el) {
+  el.textContent = '';
+  el.className = 'ai-response';
+  // Thinking pause — feels authentic
+  await new Promise(r => setTimeout(r, 900));
+  for (let i = 0; i < text.length; i++) {
+    el.textContent += text[i];
+    // Variable speed: faster on spaces, slower after punctuation, natural elsewhere
+    const ch = text[i];
+    const delay = ch === ' ' ? 8
+                : (ch === '.' || ch === '\n') ? 60
+                : ch === ',' ? 35
+                : 12 + Math.random() * 10;
+    await new Promise(r => setTimeout(r, delay));
+  }
+}
+
+async function generateResponse() {
+  const tsk = document.getElementById('f-task').value.trim();
   if (!tsk) {
-    document.getElementById('ai-response').textContent = 'Please fill in at least the Task field before generating.';
-    document.getElementById('ai-response').className = 'ai-response error';
+    const el = document.getElementById('ai-response');
+    el.textContent = 'Please fill in at least the Task field before generating.';
+    el.className = 'ai-response error';
     return;
   }
-
-  const prompt = [
-    ctx && 'CONTEXT:\n' + ctx,
-    tsk && 'TASK:\n' + tsk,
-    fmt && 'FORMAT:\n' + fmt,
-    con && 'CONSTRAINTS:\n' + con
-  ].filter(Boolean).join('\n\n');
 
   const btn = document.getElementById('gen-btn');
   const responseEl = document.getElementById('ai-response');
@@ -616,28 +684,12 @@ async function generateResponse() {
   responseEl.className = 'ai-response loading';
   responseEl.textContent = 'Claude is thinking…';
 
-  try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-    const data = await response.json();
-    if (data.error) throw new Error(data.error.message);
-    const text = data.content.map(b => b.text || '').join('');
-    responseEl.className = 'ai-response';
-    responseEl.textContent = text;
-  } catch (err) {
-    responseEl.className = 'ai-response error';
-    responseEl.textContent = 'Error: ' + err.message + '\n\nMake sure this page is served via the Claude.ai interface with API access enabled.';
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Generate with Claude →';
-  }
+  const key = detectPreset();
+  const text = key ? simulatedResponses[key] : fallbackResponse;
+  await simulateStream(text, responseEl);
+
+  btn.disabled = false;
+  btn.textContent = 'Generate with Claude →';
 }
 
 // ── INIT ──
