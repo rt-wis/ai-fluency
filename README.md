@@ -2,7 +2,7 @@
 
 An interactive training tool built to support our internal AI Fluency session. Designed for Customer Service Officers, Business Development Managers, and Product Managers who are new to Generative AI.
 
-**Live site:** [ai-fluency.vercel.app](https://ai-fluency.vercel.app)
+**Live site:** [ai-fluency.vercel.app](https://ai-fluency-self.vercel.app)
 
 ---
 
